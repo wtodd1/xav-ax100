@@ -142,6 +142,22 @@ def cmd_package(args):
     with open(args.output, 'wb+') as f:
         f.write(pack_file)
 
+def cmd_set_st16_ver(args):
+    data = bytearray()
+    with open(args.input, 'rb') as f:
+        data += f.read()
+    
+    magic = struct.unpack('8s', data[0x18:0x20])[0]
+    if magic != b'TECHWIN6':
+        print('unsupported file')
+        sys.exit(1)
+
+    version = struct.pack('16s', args.ver.encode('utf-8').ljust(16, b'\0'))
+    data[0x20:0x30] = version
+    data[0x30:0x40] = version
+
+    with open(args.output, 'wb+') as f:
+        f.write(data)
 
 parser = argparse.ArgumentParser(description='Sony XAV-AX100 firmware tool')
 parser.set_defaults(func=lambda args: parser.print_help())
@@ -161,6 +177,12 @@ cmd = subparsers.add_parser('package', help='Create update package from u-boot s
 cmd.set_defaults(func=cmd_package)
 cmd.add_argument('input')
 cmd.add_argument('output')
+
+cmd = subparsers.add_parser('set_st16_ver', help='Change st16mcu.bin firmware version')
+cmd.set_defaults(func=cmd_set_st16_ver)
+cmd.add_argument('input')
+cmd.add_argument('output')
+cmd.add_argument('--ver', required=True)
 
 args = parser.parse_args()
 args.func(args)

@@ -29,6 +29,12 @@ within the CUST_PACK.BIN archive.
 
     python tool.py extract_isp CUST_UPDT.BIN init.img
 
+### Setting st16mcu.bin version
+
+This command changes the version number of the st16mcu.bin file.
+
+    python tool.py set_st16_ver --ver "1.02.10.00" st16mcu.bin st16mcu-new.bin
+
 ### Packaging custom u-boot script
 
 This command packages a custom u-boot script into a CUST_PACK.BIN file. This can be used
@@ -61,9 +67,9 @@ Then, prepare a usb drive with the following structure:
 
 The firwmare version must be greater than the current version of the stereo. The script
 uses version '1.02.10.00', since the latest version released by Sony is '1.02.09.00'.
-The firmware version of st16mcu.bin must match the version in CUST_PACK.BIN. The easiest
-way to do this is to obtain the st16mcu.bin for your current firmware version, then edit
-the version numbers using a hex editor.
+The firmware version of st16mcu.bin must match the version in CUST_PACK.BIN. The script
+can modify the firmware version of the st16mcu.bin file, but be sure to use the version
+of st16mcu.bin that is already installed in the stereo.
 
 Insert the usb stick into the stereo and trigger a firmware update. After the update,
 the stereo should retain the old version number. There should be a new file called env
