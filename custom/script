@@ -1,0 +1,22 @@
+
+setexpr isp_ram_addr 0x2000000
+setenv isp_size_total 2048
+ispsp progress 0x0 0x0
+
+echo hello world
+echo hello world
+echo hello world
+echo hello world
+echo hello world
+echo hello world
+
+nand read 0x$isp_ram_addr env 0x80000
+fatwrite $isp_if $isp_dev $isp_ram_addr env 0x80000
+
+nand read 0x$isp_ram_addr runtime_cfg 0x100000
+fatwrite $isp_if $isp_dev $isp_ram_addr runtime_cfg 0x100000
+
+ispsp progress 0x800 0x800
+
+echo done
+setenv isp_all_or_update_done 0x1
