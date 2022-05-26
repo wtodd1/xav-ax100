@@ -119,19 +119,20 @@ the usb drive into ram before running the script. The file format is as follows:
 This appears to be the firmware for another mcu on the board. The version numbers need to
 match CUST_PACK.BIN for the stereo to begin the update.
 
-    field               offset    length    note
-    version1            32        16        version, '1.02.07.00'
-    version2            48        16        version, '1.02.07.00'
-
+| field              | offset  | length  | note                                    |
+|--------------------|---------|---------|-----------------------------------------|
+| version1           | 32      | 16      | version, '1.02.07.00'                   |
+| version2           | 48      | 16      | version, '1.02.07.00'                   |
 
 ## U-Boot RAM Map
 
-    region      offset     length
-    HW_BUF      0x1000000  0x7400000
-    ECOS_RAM2   0x8400000  0x1000000
-    SP_DISPLAY  0x9400000  0x0000000
-    RTCFG       0x9400000  0x0100000
-    BOOT_PARAM  0x9500000  0x0100000
-    SYS_LOAD    0x9600000  0x0B00000
-    INITRD      0xA100000  0x5500000
-    CHUNK_MEM   0xF600000  0x0A00000
+| region      | offset     | length       |
+|-------------|------------|--------------|
+| HW_BUF      | 0x1000000  | 0x7400000    |
+| ECOS_RAM2   | 0x8400000  | 0x1000000    |
+| SP_DISPLAY  | 0x9400000  | 0x0000000    |
+| RTCFG       | 0x9400000  | 0x0100000    |
+| BOOT_PARAM  | 0x9500000  | 0x0100000    |
+| SYS_LOAD    | 0x9600000  | 0x0B00000    |
+| INITRD      | 0xA100000  | 0x5500000    |
+| CHUNK_MEM   | 0xF600000  | 0x0A00000    |
