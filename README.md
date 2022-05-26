@@ -6,6 +6,12 @@
 * https://github.com/superdavex/Sony-XAV-AX100
 * http://oss.sony.net/Products/Linux/Audio/XAV-AX100.html
 
+## Firmware Links
+
+* [v1.02.07](https://hav.update.sony.net/ev/UsbUpdate/XAV-AX100/XAV-AX100_v10207.zip)
+* [v1.02.09](https://hav.update.sony.net/ev/UsbUpdate/XAV-AX100/XAV-AX100_v10209.zip)
+
+
 ## tool.py
 
 This script has a number of features for working with XAV-AX100 firmware updates.
