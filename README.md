@@ -131,6 +131,10 @@ ascii text from the u-boot script in this region.
 The decryption key is the md5 sum of the first 32 bytes of the CUST_UPDT.BIN file. The
 IV is always 0.
 
+The init script portion of the file is encrypted separately from the rest of the file.
+During a firmware update, u-boot loads and decrypts the first 2048 bytes that contain
+the init script. The init script then loads and decrypts the rest of the firmware data.
+
 ### update/st16mcu.bin
 
 This appears to be the firmware for another mcu on the board. The version numbers need to
