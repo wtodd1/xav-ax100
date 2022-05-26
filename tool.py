@@ -24,10 +24,8 @@ def cmd_extract(args):
 
     total_size = header[1]
     if total_size != len(data):
-        print('Invalid size')
-        sys.exit(1)
+        print('WARNING: Wrong size (expected {}, was {})'.format(total_size, len(data)))
 
-    print(header)
     pack_header_offset = header[3]
     pack_header_len = header[4]
     cust_ver = header[5].decode('utf-8').rstrip('\0')
@@ -109,6 +107,9 @@ def cmd_package(args):
     isp_file += header
     isp_file += script
 
+    if len(isp_file) > 2048:
+        print('WARNING: Init script too large')
+
     fw_version = b'1.02.10.00'
     sdk_version = b'20.1.0.2.0.0.2.0'
 
@@ -137,10 +138,6 @@ def cmd_package(args):
     pack_file += isp_file
 
     pack_file[6:10] = struct.pack('>I', len(pack_file))
-
-    if len(pack_file) > 2048:
-        print('script too large')
-        sys.exit(1)
 
     with open(args.output, 'wb+') as f:
         f.write(pack_file)
