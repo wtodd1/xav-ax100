@@ -1,11 +1,136 @@
 
 import argparse
-import ctypes
+import hashlib
 import os
 import struct
 import sys
 import time
 import zlib
+from Crypto.Cipher import AES
+
+def get_isp_from_pack(data):
+    header_fmt = '<6sIHII44x64s64s'
+    header_len = struct.calcsize(header_fmt)
+    header = struct.unpack(header_fmt, data[0:header_len])
+
+    token = header[0]
+    if token != b'GEMINI':
+        return None
+
+    total_size = header[1]
+    if total_size != len(data):
+        print('WARNING: Wrong size (expected {}, was {})'.format(total_size, len(data)))
+
+    pack_header_offset = header[3]
+    pack_header_len = header[4]
+
+    file_header_fmt = '<24sII'
+    file_header_len = struct.calcsize(file_header_fmt)
+    file_count = pack_header_len // file_header_len
+
+    for i in range(0, file_count):
+        file_header_off = pack_header_offset + (i * pack_header_len)
+        file_header = struct.unpack(
+            file_header_fmt, data[file_header_off:file_header_off+file_header_len])
+        file_name = file_header[0].decode('utf-8').rstrip('\0')
+        file_size = file_header[1]
+        file_offset = file_header[2]
+        file_data = data[file_offset:file_offset+file_size]
+
+        if file_name == 'CUST_UPDT.BIN':
+            return file_data
+            
+    return None
+
+def get_image_from_isp(data):
+    if len(data) < 32:
+        print('ERROR: Not an isp file')
+        return None
+
+    header = struct.unpack('32s', data[0:32])[0]
+    
+    header_str = header.rstrip(b'\0')
+    if header_str != b'Gemini_ISP_image':
+        print('ERROR: Not an isp file')
+        return None
+
+    # check if it is encrypted
+    encrypted = False
+    scan_region = data[0x70:0x70+0x20]
+    for b in scan_region:
+        if b >= 0x80:
+            encrypted = True
+
+    out = data[32:]
+
+    # decrypt if needed
+    if encrypted:
+        key = hashlib.md5(header).digest()
+        out = AES.new(key, AES.MODE_CBC, b'\0' * 16).decrypt(out)
+
+    # read u-boot image header
+    header_fmt = '>IIIIIIIBBBB32s'
+    header_len = struct.calcsize(header_fmt)
+    header = struct.unpack(header_fmt, out[0:header_len])
+    if header[0] != 0x27051956:
+        print('ERROR: Not a u-boot image')
+        return None
+
+    image_data_size = header[3]
+    out = out[0:header_len + image_data_size]
+    
+    return out
+
+def get_script_from_image(data):
+    # read u-boot image header
+    header_fmt = '>IIIIIIIBBBB32s'
+    header_len = struct.calcsize(header_fmt)
+    header = struct.unpack(header_fmt, data[0:header_len])
+    if header[0] != 0x27051956:
+        print('ERROR: Not a u-boot image')
+        return None
+
+    # seek past 0 terminated image size list
+    sizes = []
+    pos = header_len
+    while True:
+        size = struct.unpack('>I', data[pos:pos+4])[0]
+        pos += 4
+        if size != 0:
+            sizes.append(size)
+        else:
+            break
+    
+    if len(sizes) != 1:
+        print('ERROR: Invalid script')
+        return None
+    
+    return data[pos:pos+sizes[0]]
+
+def cmd_extract_script(args):
+    data = b''
+    with open(args.input, 'rb') as f:
+        data = f.read()
+    
+    # get CUST_UPDT.BIN from CUST_PACK.BIN
+    isp = get_isp_from_pack(data)
+    if isp == None:
+        print('CUST_UPDT.BIN not found')
+        sys.exit(1)
+
+    image = get_image_from_isp(isp)
+    if image == None:
+        print('ERROR: Failed to extract u-boot image')
+        sys.exit(1)
+    
+    # skip 
+    script = get_script_from_image(image)
+    if script == None:
+        print('ERROR: Failed to extract script from u-boot image')
+        sys.exit(1)
+
+    with open(args.output, 'wb+') as f:
+        f.write(script)
 
 def cmd_extract(args):
 
@@ -55,21 +180,6 @@ def cmd_extract(args):
 
             with open('{}/{}'.format(args.output, file_name), 'wb+') as out_file:
                 out_file.write(file_data)
-
-def cmd_extract_isp(args):
-    data = b''
-    with open(args.input, 'rb') as f:
-        data = f.read()
-    
-    if len(data) < 32:
-        print('Wrong size for isp file')
-    
-    header = struct.unpack('32s', data[0:32])[0].rstrip(b'\0')
-    if header != b'Gemini_ISP_image':
-        print('Not an isp file')
-    
-    with open(args.output, 'wb+') as f:
-        f.write(data[32:])
 
 def cmd_package(args):
     script = bytearray()
@@ -168,8 +278,8 @@ cmd.set_defaults(func=cmd_extract)
 cmd.add_argument('input')
 cmd.add_argument('output')
 
-cmd = subparsers.add_parser('extract_isp', help='Extract CUST_UPDT.BIN file')
-cmd.set_defaults(func=cmd_extract_isp)
+cmd = subparsers.add_parser('extract_script', help='Extract u-boot init script from CUST_PACK.BIN file')
+cmd.set_defaults(func=cmd_extract_script)
 cmd.add_argument('input')
 cmd.add_argument('output')
 

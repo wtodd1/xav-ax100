@@ -22,12 +22,13 @@ This command extracts the files and metadata from CUST_PACK.BIN
 
     python tool.py extract CUST_PACK.BIN out/
 
-### Extracting CUST_UPDT.BIN
+### Extracting init script
 
-This command extracts the u-boot script image from CUST_UPDT.BIN, which is contained
-within the CUST_PACK.BIN archive.
+This command extracts the u-boot init script from CUST_PACK.BIN. If the init
+script is encrypted, it will be automatically decrypted as well. The decryption
+key is derived from information within the update file.
 
-    python tool.py extract_isp CUST_UPDT.BIN init.img
+    python tool.py extract_script CUST_UPDT.BIN init.img
 
 ### Setting st16mcu.bin version
 
@@ -112,13 +113,23 @@ The number of entries is calculated as follows:
 ### CUST_PACK.BIN/CUST_UPDT.BIN
 
 This file contains a u-boot script image that is sourced by u-boot during an update. The
-size seems to be limited to 2048 bytes, since u-boot only loads the first 2048 bytes from
-the usb drive into ram before running the script. The file format is as follows:
+size of the script seems to be limited to 2048 bytes, since u-boot only loads the first
+2048 bytes from the usb drive into ram before running the script. The rest of the
+firmware update data is appended to the end of this file, after the u-boot script image.
+The file format is as follows:
 
 | field              | offset  | length  | note                                    |
 |--------------------|---------|---------|-----------------------------------------|
 | magic              | 0       | 32      | 'Gemini_ISP_image', padded with 0s      |
 | contents           | 32      | n       | u-boot script image                     |
+
+In the official firmware updates, this file is encrypted using AES 128 CBC. When
+loading the file, u-boot assumes it is encrypted if any bytes in the range of
+[0x70, 0xAF] are greater than or equal to 0x80, since an unencrypted file will contain
+ascii text from the u-boot script in this region.
+
+The decryption key is the md5 sum of the first 32 bytes of the CUST_UPDT.BIN file. The
+IV is always 0.
 
 ### update/st16mcu.bin
 
