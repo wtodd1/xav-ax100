@@ -11,6 +11,12 @@
 * [v1.02.07](https://hav.update.sony.net/ev/UsbUpdate/XAV-AX100/XAV-AX100_v10207.zip)
 * [v1.02.09](https://hav.update.sony.net/ev/UsbUpdate/XAV-AX100/XAV-AX100_v10209.zip)
 
+## extract.py
+
+This tool can extract and decrypt nand partitions from the official firmware update
+(v1.02.07).
+
+    python extract.py XAV-AX100_v10207.zip out
 
 ## tool.py
 
